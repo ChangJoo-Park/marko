@@ -142,28 +142,32 @@ VElement.prototype = {
             doc.createElementNS(namespaceURI, tagName) :
             doc.createElement(tagName);
 
-        for (var attrName in attributes) {
-            var attrValue = attributes[attrName];
+        if (tagName.indexOf('-') > 0) {
+            Object.assign(el, attributes);
+        } else {
+            for (var attrName in attributes) {
+                var attrValue = attributes[attrName];
 
-            if (attrValue !== false && attrValue != null) {
-                var type = typeof attrValue;
+                if (attrValue !== false && attrValue != null) {
+                    var type = typeof attrValue;
 
-                if (type !== 'string') {
-                    // Special attributes aren't copied to the real DOM. They are only
-                    // kept in the virtual attributes map
-                    attrValue = convertAttrValue(type, attrValue);
-                }
+                    if (type !== 'string') {
+                        // Special attributes aren't copied to the real DOM. They are only
+                        // kept in the virtual attributes map
+                        attrValue = convertAttrValue(type, attrValue);
+                    }
 
-                if (attrName == ATTR_XLINK_HREF) {
-                    setAttribute(el, NS_XLINK, ATTR_HREF, attrValue);
-                } else {
-                    el.setAttribute(attrName, attrValue);
+                    if (attrName == ATTR_XLINK_HREF) {
+                        setAttribute(el, NS_XLINK, ATTR_HREF, attrValue);
+                    } else {
+                        el.setAttribute(attrName, attrValue);
+                    }
                 }
             }
-        }
 
-        if (flags & FLAG_IS_TEXTAREA) {
-            el.value = this.___value;
+            if (flags & FLAG_IS_TEXTAREA) {
+                el.value = this.___value;
+            }
         }
 
         el._vattrs = attributes;
@@ -234,11 +238,14 @@ VElement.___removePreservedAttributes = function(attrs) {
 };
 
 VElement.___morphAttrs = function(fromEl, toEl) {
-
     var removePreservedAttributes = VElement.___removePreservedAttributes;
 
     var attrs = toEl.___attributes;
     var props = fromEl._vprops = toEl.___properties;
+
+    if (toEl.___nodeName.indexOf('-') > 0) {
+        return Object.assign(fromEl, attrs);
+    }
 
     var attrName;
     var i;
